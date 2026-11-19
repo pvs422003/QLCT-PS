@@ -239,89 +239,11 @@ function createId() {
   return `tx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function createSeedTransactions() {
-  const today = new Date();
-  const offsetIso = (daysAgo) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - daysAgo);
-    return toISODate(d);
-  };
-
-  const now = Date.now();
-  return [
-    {
-      id: 'seed_1',
-      type: 'income',
-      category: 'Grab',
-      amount: 320000,
-      date: offsetIso(0),
-      note: 'Chạy ca sáng + trưa',
-      createdAt: now - 1000,
-    },
-    {
-      id: 'seed_2',
-      type: 'expense',
-      category: 'Ăn',
-      amount: 45000,
-      date: offsetIso(0),
-      note: 'Cơm tấm sườn bì',
-      createdAt: now - 2000,
-    },
-    {
-      id: 'seed_3',
-      type: 'expense',
-      category: 'Uống',
-      amount: 25000,
-      date: offsetIso(0),
-      note: 'Cà phê sữa đá',
-      createdAt: now - 3000,
-    },
-    {
-      id: 'seed_4',
-      type: 'income',
-      category: 'Dạy',
-      amount: 400000,
-      date: offsetIso(1),
-      note: 'Gia sư Toán tối',
-      createdAt: now - 4000,
-    },
-    {
-      id: 'seed_5',
-      type: 'expense',
-      category: 'Đổ xăng',
-      amount: 70000,
-      date: offsetIso(1),
-      note: 'Đổ đầy bình RON 95',
-      createdAt: now - 5000,
-    },
-    {
-      id: 'seed_6',
-      type: 'income',
-      category: 'Tiền tip',
-      amount: 50000,
-      date: offsetIso(2),
-      note: 'Khách thưởng giao nhanh',
-      createdAt: now - 6000,
-    },
-    {
-      id: 'seed_7',
-      type: 'expense',
-      category: 'Net',
-      amount: 35000,
-      date: offsetIso(2),
-      note: 'Chơi game cùng bạn',
-      createdAt: now - 7000,
-    },
-    {
-      id: 'seed_8',
-      type: 'expense',
-      category: 'Mua đồ',
-      amount: 185000,
-      date: offsetIso(4),
-      note: 'Mua áo thun & tất',
-      createdAt: now - 8000,
-    },
-  ];
+export function stripSeedTransactions(transactions) {
+  if (!Array.isArray(transactions)) return [];
+  return transactions.filter(
+    (tx) => !(tx && typeof tx.id === 'string' && /^seed_\d+$/.test(tx.id))
+  );
 }
 
 /* ==========================================================================
@@ -421,14 +343,18 @@ if (typeof document !== 'undefined') {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          state.transactions = parsed;
+          const cleaned = stripSeedTransactions(parsed);
+          state.transactions = cleaned;
+          if (cleaned.length !== parsed.length) {
+            saveTransactions();
+          }
           return;
         }
       }
     } catch {
-      // Fallback to seed data if storage is corrupted
+      // Fallback to empty state if storage is corrupted
     }
-    state.transactions = createSeedTransactions();
+    state.transactions = [];
     saveTransactions();
   }
 

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CATEGORIES,
+  stripSeedTransactions,
   formatVND,
   parseVND,
   groupTransactionsByDate,
@@ -14,6 +15,16 @@ import {
 
 test('CATEGORIES.expense includes Đi chơi', () => {
   assert.ok(CATEGORIES.expense.includes('Đi chơi'));
+});
+
+test('stripSeedTransactions removes legacy seed records and keeps user records', () => {
+  const result = stripSeedTransactions([
+    { id: 'seed_1', type: 'income', amount: 320000 },
+    { id: 'tx_1700000000000_abc123', type: 'expense', amount: 50000 },
+    { id: 'seed_8', type: 'expense', amount: 185000 },
+  ]);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, 'tx_1700000000000_abc123');
 });
 
 test('formatVND and parseVND handle Vietnamese thousand separators', () => {
