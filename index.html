@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Sổ Chi Tiêu Cá Nhân</title>
+    <meta
+      name="description"
+      content="Ứng dụng web Mobile-First quản lý thu chi cá nhân thuần HTML, CSS, JavaScript với thống kê trực quan và sao lưu dữ liệu."
+    />
+    <meta property="og:title" content="Sổ Chi Tiêu Cá Nhân" />
+    <meta
+      property="og:description"
+      content="Quản lý thu chi cá nhân nhanh gọn trên điện thoại, thống kê theo tuần/tháng/năm và sao lưu JSON/CSV."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Top Header -->
+      <header class="app-header">
+        <div class="header-inner">
+          <h1 class="brand-title" id="pageTitle">Sổ Chi Tiêu</h1>
+          <span class="header-date" id="headerDateLabel"></span>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Content -->
+      <main class="app-main" id="appMain">
+        <!-- TAB 1: HOME / TRANSACTIONS BY DAY -->
+        <section
+          class="view-section is-active"
+          id="viewHome"
+          aria-labelledby="pageTitle"
+          data-view="home"
+        >
+          <!-- Overview Balance Card -->
+          <div class="summary-card" aria-label="Tổng quan tài chính">
+            <div class="summary-top">
+              <span class="summary-label">Số dư hiện tại</span>
+              <strong class="summary-balance" id="totalBalance">0 đ</strong>
+            </div>
+            <div class="summary-divider" aria-hidden="true"></div>
+            <div class="summary-metrics">
+              <div class="metric-box">
+                <span class="metric-label">Tổng thu</span>
+                <strong class="metric-value is-income" id="totalIncome">+0 đ</strong>
+              </div>
+              <div class="metric-box">
+                <span class="metric-label">Tổng chi</span>
+                <strong class="metric-value is-expense" id="totalExpense">-0 đ</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Transactions List -->
+          <div class="section-header">
+            <h2 class="section-title">Giao dịch theo ngày</h2>
+            <span class="section-meta" id="txCountLabel">0 khoản</span>
+          </div>
+
+          <div class="day-list" id="dayList" data-testid="day-list"></div>
+
+          <div class="empty-state" id="homeEmptyState" hidden>
+            <p class="empty-title">Chưa có giao dịch nào</p>
+            <p class="empty-desc">Bấm nút dấu cộng (+) bên dưới để ghi lại khoản thu hoặc chi đầu tiên.</p>
+          </div>
+        </section>
+
+        <!-- TAB 2: STATISTICS -->
+        <section
+          class="view-section"
+          id="viewStats"
+          aria-label="Thống kê thu chi"
+          data-view="stats"
+          hidden
+        >
+          <!-- Segmented Period Filter -->
+          <div class="segmented-control" role="tablist" aria-label="Chọn kỳ thống kê">
+            <button
+              type="button"
+              class="segment-btn is-active"
+              role="tab"
+              aria-selected="true"
+              data-period="week"
+            >
+              Tuần
+            </button>
+            <button
+              type="button"
+              class="segment-btn"
+              role="tab"
+              aria-selected="false"
+              data-period="month"
+            >
+              Tháng
+            </button>
+            <button
+              type="button"
+              class="segment-btn"
+              role="tab"
+              aria-selected="false"
+              data-period="year"
+            >
+              Năm
+            </button>
+          </div>
+
+          <!-- Period Navigator -->
+          <div class="period-nav">
+            <button
+              type="button"
+              class="icon-btn"
+              id="btnPrevPeriod"
+              aria-label="Kỳ trước"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <span class="period-label" id="statsPeriodLabel">Tuần này</span>
+            <button
+              type="button"
+              class="icon-btn"
+              id="btnNextPeriod"
+              aria-label="Kỳ sau"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Period Summary Grid -->
+          <div class="stats-summary-grid">
+            <div class="stat-tile">
+              <span class="stat-tile-label">Tổng thu</span>
+              <strong class="stat-tile-value is-income" id="statsIncome">0 đ</strong>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-tile-label">Tổng chi</span>
+              <strong class="stat-tile-value is-expense" id="statsExpense">0 đ</strong>
+            </div>
+            <div class="stat-tile stat-tile-wide">
+              <span class="stat-tile-label">Tiền dư trong kỳ</span>
+              <strong class="stat-tile-value" id="statsNet">0 đ</strong>
+            </div>
+          </div>
+
+          <!-- Category Breakdown Type Switcher -->
+          <div class="section-header">
+            <h2 class="section-title">Tỷ lệ theo danh mục</h2>
+            <div class="mini-switch" role="group" aria-label="Loại thống kê danh mục">
+              <button type="button" class="mini-switch-btn is-active" data-stat-type="expense">
+                Chi phí
+              </button>
+              <button type="button" class="mini-switch-btn" data-stat-type="income">
+                Thu nhập
+              </button>
+            </div>
+          </div>
+
+          <!-- Stacked Distribution Bar -->
+          <div class="stacked-bar-wrap" id="stackedBarWrap" hidden>
+            <div class="stacked-bar" id="stackedBar" role="img" aria-label="Biểu đồ tỷ lệ danh mục"></div>
+          </div>
+
+          <!-- Progress List -->
+          <div class="breakdown-list" id="breakdownList" data-testid="breakdown-list"></div>
+
+          <div class="empty-state" id="statsEmptyState" hidden>
+            <p class="empty-title">Không có dữ liệu trong kỳ này</p>
+            <p class="empty-desc">Thử chuyển sang kỳ khác hoặc thêm giao dịch mới.</p>
+          </div>
+        </section>
+
+        <!-- TAB 3: BACKUP & RESTORE -->
+        <section
+          class="view-section"
+          id="viewBackup"
+          aria-label="Sao lưu và khôi phục dữ liệu"
+          data-view="backup"
+          hidden
+        >
+          <div class="backup-card">
+            <h2 class="backup-title">Xuất dữ liệu</h2>
+            <p class="backup-desc">
+              Tải bản sao toàn bộ giao dịch về điện thoại để lưu trữ an toàn hoặc mở bằng Excel / Google Sheets.
+            </p>
+            <div class="backup-actions">
+              <button type="button" class="btn btn-primary" id="btnExportJson">
+                Xuất file JSON
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnExportCsv">
+                Xuất file CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="backup-card">
+            <h2 class="backup-title">Khôi phục dữ liệu</h2>
+            <p class="backup-desc">
+              Chọn file <strong>.json</strong> đã sao lưu trước đó để khôi phục toàn bộ lịch sử thu chi khi đổi máy hoặc xóa cache trình duyệt.
+            </p>
+            <input
+              type="file"
+              id="inputImportJson"
+              accept=".json,application/json"
+              class="sr-only"
+              aria-label="Chọn file JSON sao lưu"
+            />
+            <button type="button" class="btn btn-outline" id="btnImportJson">
+              Nhập file JSON để khôi phục
+            </button>
+          </div>
+
+          <div class="backup-card">
+            <h2 class="backup-title">Quản lý bộ nhớ</h2>
+            <p class="backup-desc" id="storageSummary">
+              Dữ liệu được tự động lưu trên trình duyệt của bạn.
+            </p>
+            <button type="button" class="btn btn-danger-ghost" id="btnClearAll">
+              Xóa toàn bộ dữ liệu
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <!-- Floating Add Button -->
+      <button
+        type="button"
+        class="nav-fab"
+        id="btnOpenAdd"
+        aria-label="Thêm giao dịch mới"
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+
+      <!-- Bottom Navigation Bar -->
+      <nav class="bottom-nav" aria-label="Điều hướng chính">
+        <button
+          type="button"
+          class="nav-item is-active"
+          data-nav="home"
+          aria-current="page"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Sổ chi tiêu</span>
+        </button>
+
+        <button type="button" class="nav-item" data-nav="stats">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Thống kê</span>
+        </button>
+
+        <button type="button" class="nav-item" data-nav="backup">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Sao lưu</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- MODAL 1: ADD / EDIT TRANSACTION BOTTOM SHEET -->
+    <div
+      class="sheet-backdrop"
+      id="txSheetBackdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="txSheetTitle"
+      hidden
+    >
+      <div class="bottom-sheet" id="txSheet">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-header">
+          <h2 class="sheet-title" id="txSheetTitle">Thêm giao dịch</h2>
+          <button type="button" class="icon-btn" id="btnCloseTxSheet" aria-label="Đóng bảng nhập liệu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form id="txForm" class="sheet-body" novalidate>
+          <input type="hidden" id="txId" />
+
+          <!-- Type Switcher -->
+          <div class="type-tabs" role="tablist" aria-label="Loại giao dịch">
+            <button
+              type="button"
+              class="type-tab is-active is-expense"
+              role="tab"
+              aria-selected="true"
+              data-tx-type="expense"
+            >
+              Chi phí
+            </button>
+            <button
+              type="button"
+              class="type-tab"
+              role="tab"
+              aria-selected="false"
+              data-tx-type="income"
+            >
+              Thu nhập
+            </button>
+          </div>
+
+          <!-- Amount Input -->
+          <div class="field-group">
+            <label for="txAmount" class="field-label">Số tiền (VNĐ)</label>
+            <div class="amount-input-wrap">
+              <input
+                type="text"
+                id="txAmount"
+                class="amount-input"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="0"
+                required
+              />
+              <span class="amount-currency" aria-hidden="true">đ</span>
+            </div>
+            <p class="field-error" id="txAmountError" role="alert" hidden></p>
+          </div>
+
+          <!-- Category Quick Tap Grid -->
+          <div class="field-group">
+            <span class="field-label" id="categoryGroupLabel">Danh mục</span>
+            <div
+              class="category-grid"
+              id="categoryGrid"
+              role="radiogroup"
+              aria-labelledby="categoryGroupLabel"
+            ></div>
+            <p class="field-error" id="txCategoryError" role="alert" hidden></p>
+          </div>
+
+          <!-- Date & Note -->
+          <div class="field-row">
+            <div class="field-group">
+              <label for="txDate" class="field-label">Ngày giao dịch</label>
+              <input type="date" id="txDate" class="text-input" required />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="txNote" class="field-label">Ghi chú ngắn (tùy chọn)</label>
+            <input
+              type="text"
+              id="txNote"
+              class="text-input"
+              maxlength="80"
+              placeholder="Ví dụ: Cơm trưa, đổ đầy bình..."
+            />
+          </div>
+
+          <!-- Submit & Delete Actions -->
+          <div class="sheet-actions">
+            <button type="submit" class="btn btn-primary btn-lg" id="btnSaveTx">
+              Lưu giao dịch
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger-ghost btn-lg"
+              id="btnDeleteTx"
+              hidden
+            >
+              Xóa giao dịch này
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 2: DAY DETAIL BOTTOM SHEET -->
+    <div
+      class="sheet-backdrop"
+      id="daySheetBackdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="daySheetTitle"
+      hidden
+    >
+      <div class="bottom-sheet" id="daySheet">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-header">
+          <div>
+            <h2 class="sheet-title" id="daySheetTitle">Chi tiết ngày</h2>
+            <p class="sheet-subtitle" id="daySheetSummary"></p>
+          </div>
+          <button type="button" class="icon-btn" id="btnCloseDaySheet" aria-label="Đóng chi tiết ngày">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="sheet-body">
+          <div class="day-detail-list" id="dayDetailList" data-testid="day-detail-list"></div>
+          <div class="sheet-actions">
+            <button type="button" class="btn btn-secondary btn-lg" id="btnAddForDay">
+              + Thêm khoản cho ngày này
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: CONFIRM DIALOG (NO window.confirm) -->
+    <div
+      class="sheet-backdrop is-center"
+      id="confirmBackdrop"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirmTitle"
+      aria-describedby="confirmMessage"
+      hidden
+    >
+      <div class="confirm-dialog">
+        <h2 class="confirm-title" id="confirmTitle">Xác nhận</h2>
+        <p class="confirm-message" id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-secondary" id="btnConfirmCancel">Hủy</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmOk">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="/script.js"></script>
+  </body>
+</html>

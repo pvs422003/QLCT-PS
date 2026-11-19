@@ -1,0 +1,6 @@
+{
+  "name": "Sổ Chi Tiêu Cá Nhân",
+  "description": "Ứng dụng web Mobile-First quản lý thu chi cá nhân thuần HTML, CSS, JavaScript với thống kê trực quan và sao lưu dữ liệu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
